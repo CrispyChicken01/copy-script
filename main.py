@@ -6,9 +6,9 @@ def grab_files(file_extension):
 	
 	for i in source_dir.rglob(f"*.{file_extension}*"):
 		if any(x.startswith('.') for x in i.parts):
-			continue
+			continue   		# Ignores any hidden folders (folders starting with an '.')
 		print("*" * 20 )
-		print(i)
+		print(i)	# Outputs the grabbed files
 		# print("\n")
 
 
