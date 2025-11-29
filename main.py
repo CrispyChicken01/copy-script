@@ -1,10 +1,10 @@
 from pathlib import Path
 import datetime
 import shutil
-
+from drives_info import get_removeable_disk_letter
 
 source_dir = Path('G:/') # input letter from drives_info module
-
+# get_removeable_disk_letter()
 
 def get_finalpath(the_file, root_folder):
 	test_path = Path(the_file)
@@ -31,7 +31,7 @@ def grab_files():
 
 		make_folder(final_path)
 		print(f"{i} \n{final_path}")
-		file_copy(i, final_path)
+		# file_copy(i, final_path)
 		print("*" * 20 )
 		# print(i)		# Outputs the grabbed files
 		# print("\n")
