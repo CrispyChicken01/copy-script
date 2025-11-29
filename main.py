@@ -14,6 +14,14 @@ def grab_files():
 		# print("\n")
 
 
+def fold_name():
+	now = datetime.datetime.now()
+	now = now.strftime("%d-%m-%y_%H-%M-%S")
+	print(now)
+	return now
+	pass
+
+
 def make_folder(folder_name):
 	destination_dir = source_dir / folder_name
 	pass
@@ -22,8 +30,8 @@ def make_folder(folder_name):
 def main():
 	
 	
-	
-	grab_files()
+	fold_name()
+	# grab_files()
 
 
 
