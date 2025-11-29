@@ -1,41 +1,49 @@
 from pathlib import Path
 import datetime
+import shutil
 
 
 source_dir = Path('g:/')
 
 
-def get_finalpath(the_file):
+def get_finalpath(the_file, root_folder):
 	test_path = Path(the_file)
 
-	drive_letter = 'c:'
+	drive_letter = 'c:/'
 	part_list = list(test_path.parent.parts)
 
 	fixed_path = part_list[1:]
-	final_path = [drive_letter] + fixed_path
-	final_path_object = Path(*final_path)
+	final_path_list =  [drive_letter, root_folder] + fixed_path
+	# final_path_object = Path(*final_path_list)
+	# print(final_path_list)
+	return Path(*final_path_list)
 
-	print(final_path_object)
-	pass
+	
+	
 
 def grab_files():
 	
-	for i in source_dir.rglob(f"*.ppt*"):
+	for i in source_dir.rglob("*.ppt*"):
 		if any(x.startswith('.') for x in i.parts):
 			continue 	# Ignores any hidden folders (folders starting with an '.')
-		get_finalpath(i)
+		root_folder = fold_name()
+		final_path = get_finalpath(i, root_folder)
+		print(f"{i} \n{final_path}")
+		# file_copy(i, final_path)
 		print("*" * 20 )
 		# print(i)		# Outputs the grabbed files
 		# print("\n")
 
+def file_copy(file, des_path):
+	shutil.copy2(file, des_path)
+	
 
 def fold_name():
 	now = datetime.datetime.now()
 	now = now.strftime("%d-%m-%y_%H-%M-%S")
-	print(now)
+	# print(now)
 	return now
-	pass
-
+	
 
 def make_folder(folder_name):
 	destination_dir = source_dir / folder_name
@@ -45,8 +53,10 @@ def make_folder(folder_name):
 def main():
 	
 	
-	fold_name()
-	grab_files()
+	# test = get_finalpath()
+	# print(test)
+	# print(get_finalpath('g:/dir1/dir2/141890.txt', fold_name()))
+	print(grab_files())
 
 
 
