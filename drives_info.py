@@ -4,7 +4,7 @@ import pythoncom
 import main
 import sys
 import time
-
+from pathlib import Path
 
 is_on = True
 removeable_drives: list[str] = []
@@ -50,7 +50,7 @@ def thread() -> list[str]:
 
 
 
-def begin() -> str:
+def work_loop() -> str:
     global is_on
     drives = thread()
     while is_on:
@@ -71,6 +71,12 @@ def begin() -> str:
             main.main(dir)
             # print(get_removeable_disk_letter())
 
+
+def begin():
+    run = threading.Thread(target=work_loop)
+    run.daemon = True
+    run.start()
+    return
 
 
 if __name__ == '__main__':
