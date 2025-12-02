@@ -1,7 +1,7 @@
 import wmi
 import threading
 import pythoncom
-
+is_on = True
 removeable_drives: list[str] = []
 
 # DRIVE_TYPES = {
@@ -13,6 +13,11 @@ removeable_drives: list[str] = []
 #     5 : "Compact Disc",
 #     6 : "RAM Disk"
 # }
+
+def stop() -> None:
+    global is_on
+    is_on = False
+
 
 
 def get_removeable_disk_letter() -> list[str]:
