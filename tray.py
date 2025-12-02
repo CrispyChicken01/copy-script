@@ -2,7 +2,7 @@ import pystray
 from PIL import Image
 import drives_info
 import threading
-
+from pathlib import Path
 # def do_stuff(icon, item):
 # 	if str(item) == 'On':
 # 		print('It is on')
@@ -26,8 +26,10 @@ import threading
 
 def main():
 
-	image = Image.open('D:/My_files/Programming/Python/Github_projects/copy-script/Barb_pic.jpg')
-
+	source_py_dir = Path(__file__).parent
+	img_path = source_py_dir / 'Barb_pic.jpg'
+	image = Image.open(img_path)
+	print("-----Tray icon started-----")
 	icon = pystray.Icon("copy-script", image, menu= pystray.Menu( 
 		pystray.MenuItem('Start', drives_info.begin),
 		pystray.MenuItem('Stop', drives_info.stop),

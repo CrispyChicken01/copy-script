@@ -23,7 +23,7 @@ def stop(icon, item) -> None:
     
     global is_on
     is_on = False
-    print("Stopping app")
+    print("Stopped app")
 
 def exit(icon, item) -> None:
 	print('-----Exiting-----')
