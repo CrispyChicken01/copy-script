@@ -43,8 +43,9 @@ def main():
 
 	icon.run()
 
-
-thread = threading.Thread(target=main)
-thread.start()
+if __name__=='__main__':
+	main()
+# thread = threading.Thread(target=main)
+# thread.start()
 # Removed thread.join() maybe it causes deadlock, idk
 # I think it does break the console/terminal, blocking me from interacting with it. like ctrl + c does not exit it.
