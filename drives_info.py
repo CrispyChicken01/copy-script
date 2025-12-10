@@ -4,7 +4,14 @@ import pythoncom
 import main
 import sys
 import time
+import logging
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
+simPrint = logging.StreamHandler()
+simPrint.setLevel(logging.INFO)
+logger.addHandler(simPrint)
 
 is_on = True
 removeable_drives: list[str] = []
@@ -23,11 +30,13 @@ def stop(icon, item) -> None:
     
     global is_on
     is_on = False
-    print("Stopped app")
+    # print("Stopped app")
+    logger.info("Stopped app")
 
 def exit(icon, item) -> None:
-	print('-----Exiting-----')
-	icon.stop()
+	# print('-----Exiting-----')
+    logger.info('-----Exiting-----')
+    icon.stop()
 
 def get_removeable_disk_letter() -> str:
     pythoncom.CoInitialize()
@@ -42,7 +51,8 @@ def get_removeable_disk_letter() -> str:
 
 
 def thread() -> list[str]:
-    print('----Starting-----')
+    # print('----Starting-----')
+    logger.info('-----Starting-----')
     run = threading.Thread(target=get_removeable_disk_letter)
     run.start()
     run.join()
@@ -57,7 +67,8 @@ def work_loop() -> str:
     
         if not usb_drives:
 
-            print("No removeable disk found")
+            # print("No removeable disk found")
+            logger.error("No removeable disk found")
             # sys.exit()
             time.sleep(5)
         else:
