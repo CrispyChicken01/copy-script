@@ -63,9 +63,9 @@ def thread() -> list[str]: # Function to run the thread that gets disk letter
 
 def work_loop() -> str:
     global is_on
-    usb_drives = thread()
-    while is_on:
     
+    while is_on:
+        usb_drives = thread()
         if not usb_drives:
 
             # print("No removeable disk found")
@@ -80,8 +80,9 @@ def work_loop() -> str:
                 # dir = Path("g:/")
 
             # if __name__== '__main__':
-            main.main(dir) # Sends the drive letter to the main.py
+                main.main(dir) # Sends the drive letter to the main.py
             # print(get_removeable_disk_letter())
+        time.sleep(60)
 
 
 def begin():
