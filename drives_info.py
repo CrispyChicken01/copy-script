@@ -10,9 +10,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-simPrint = logging.StreamHandler()
-simPrint.setLevel(logging.INFO)
-logger.addHandler(simPrint)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+logger.addHandler(console_handler)
 
 is_on = True
 removeable_drives: list[str] = []
