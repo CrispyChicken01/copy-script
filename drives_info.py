@@ -69,7 +69,7 @@ def work_loop() -> str:
         if not usb_drives:
 
             # print("No removeable disk found")
-            logger.error("No removeable disk found")
+            logger.warning("No removeable disk found")
             # sys.exit()
             time.sleep(5)
         else:
