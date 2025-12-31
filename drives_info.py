@@ -40,7 +40,7 @@ def exit(icon, item) -> None:
     icon.stop()
 
 def get_removeable_disk_letter() -> list[str]:
-    pythoncom.CoInitialize()
+    # pythoncom.CoInitialize()
     c  = wmi.WMI()
     # removeable_drives = []
     # global removeable_drives
@@ -48,17 +48,17 @@ def get_removeable_disk_letter() -> list[str]:
     for drive in c.Win32_LogicalDisk():
         if drive.DriveType == 2:
             removeable_drives.append(drive.Caption)
-    pythoncom.CoUninitialize()
+    # pythoncom.CoUninitialize()
     return removeable_drives
 
 
-def thread() -> list[str]: # Function to run the thread that gets disk letter
-    # print('----Starting-----')
-    logger.info('-----Starting-----')
-    run = threading.Thread(target=get_removeable_disk_letter)
-    run.start()
-    run.join()
-    return removeable_drives
+# def thread() -> list[str]: # Function to run the thread that gets disk letter
+#     # print('----Starting-----')
+#     logger.info('-----Starting-----')
+#     run = threading.Thread(target=get_removeable_disk_letter)
+#     run.start()
+#     run.join()
+#     return removeable_drives
 
 
 
