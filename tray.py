@@ -51,7 +51,11 @@ def main():
 	icon.run()
 
 if __name__=='__main__':
-	logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(levelname)s: %(message)s', filename='c:/copyscript.log')
+	logging.basicConfig(level=logging.INFO, 
+	format='%(asctime)s: %(levelname)s: %(message)s', 
+	filename='c:/copyscript.log',
+	filemode='a',
+	encoding = 'utf-8')
 	
 	main()
 # thread = threading.Thread(target=main)
