@@ -15,7 +15,8 @@ console_handler.setLevel(logging.INFO)
 logger.addHandler(console_handler)
 
 is_on = True
-
+# processed_drives = []
+removeable_drives: list[str] = [] # Saves the drive letter that was found
 
 # DRIVE_TYPES = {
 #     0 : "Unknown",
@@ -44,10 +45,13 @@ def get_removeable_disk_letter() -> list[str]:
     c  = wmi.WMI()
     # removeable_drives = []
     # global removeable_drives
-    removeable_drives: list[str] = []
+    
     for drive in c.Win32_LogicalDisk():
-        if drive.DriveType == 2:
+        if drive.DriveType == 2 and not removeable_drives:
             removeable_drives.append(drive.Caption)
+            logging.info(f"Found USB drive {drive.caption}")
+        else:
+            logging.info(f"The contents of the usb drive {drive.caption} has already been copied.")
     # pythoncom.CoUninitialize()
     return removeable_drives
 
@@ -62,7 +66,7 @@ def get_removeable_disk_letter() -> list[str]:
 
 
 
-def work_loop() -> str:
+def work_loop():
     global is_on
     
     while is_on:
