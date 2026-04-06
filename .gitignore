@@ -6,3 +6,15 @@ __pycache__/
 .venv/
 venv/
 testing/
+
+build/
+dist/
+tray.spec
+<<<<<<< Updated upstream
+copy-script.geany
+=======
+copy-script.geany
+token.json
+*.spec
+credentials.json
+>>>>>>> Stashed changes
