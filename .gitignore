@@ -12,3 +12,6 @@ dist/
 tray.spec
 copy-script.geany
 token.json
+*.spec
+credentials.json
+
