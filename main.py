@@ -2,7 +2,7 @@ from pathlib import Path
 from itertools import chain
 import datetime
 import logging
-
+import sys
 import google_drive_service
 
 logger = logging.getLogger(__name__)
@@ -39,18 +39,28 @@ def grab_files(dir):
 	)
 
 	for file in files:
-<<<<<<< Updated upstream
-		if any(x.startswith('.') for x in i.parts):
+		if any(x.startswith('.') for x in file.parts):
 			continue 	# Ignores any hidden folders (folders starting with an '.')
 		
-		final_path = get_finalpath(i, root_folder)
-
-		make_folder(final_path)
+		# Build folder path parts for Google Drive (preserving hierarchy)
+		relative_parts = list(file.parent.parts)[1:]  # Remove drive letter
+		drive_folder_parts = [root_folder] + relative_parts
 		
-		file_copy(i, final_path)
-		# print(f"Copied {i} -> {final_path}")
-		# print("*" * 20 )
-=======
+		# Local fallback path
+		local_fallback_path = get_finalpath(file, root_folder)
+		
+		# Upload to Google Drive with local fallback
+		success = google_drive_service.upload_with_fallback(
+			file_path=file,
+			drive_folder_parts=drive_folder_parts,
+			local_fallback_path=local_fallback_path
+		)
+		
+		if success:
+			logger.info(f"Successfully saved: {file.name}")
+		else:
+			logger.error(f"Failed to save: {file.name}")
+		
 		# Ignore hidden folders (starting with '.') (#5)
 		if any(x.startswith('.') for x in file.parts):
 			continue
@@ -78,10 +88,8 @@ def grab_files(dir):
 		else:
 			logger.error(f"Failed to save: {file.name}")
 
->>>>>>> Stashed changes
+ main
 		logger.info("*" * 20)
-		# print(i)		# Outputs the grabbed files
-		# print("\n")
 
 
 def fold_name():

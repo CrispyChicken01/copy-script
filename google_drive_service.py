@@ -1,7 +1,11 @@
+"""
+Google Drive Service Module
+Handles authentication and file upload to Google Drive with local fallback.
+"""
+
 import os
 import logging
 import shutil
-import time
 from pathlib import Path
 from typing import Optional
 
@@ -14,10 +18,10 @@ from googleapiclient.errors import HttpError
 
 logger = logging.getLogger(__name__)
 
-
+# If modifying these scopes, delete the token.json file
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
-
+# Path to credentials file (same directory as this script)
 SCRIPT_DIR = Path(__file__).parent
 CREDENTIALS_FILE = SCRIPT_DIR / 'credentials.json'
 TOKEN_FILE = SCRIPT_DIR / 'token.json'
@@ -25,11 +29,11 @@ TOKEN_FILE = SCRIPT_DIR / 'token.json'
 _drive_service = None
 
 
-_folder_cache: dict[str, str] = {}
-
-
 def authenticate():
-
+    """
+    Authenticate with Google Drive API using OAuth 2.0.
+    Returns the Drive service object, or None if authentication fails.
+    """
     global _drive_service
     
     if _drive_service is not None:
@@ -37,14 +41,14 @@ def authenticate():
     
     creds = None
     
-
+    # Check if token.json exists with saved credentials
     if TOKEN_FILE.exists():
         try:
             creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
         except Exception as e:
             logger.warning(f"Failed to load saved credentials: {e}")
     
-
+    # If no valid credentials, start OAuth flow
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
@@ -67,7 +71,7 @@ def authenticate():
                 logger.error(f"OAuth flow failed: {e}")
                 return None
         
-
+        # Save the credentials for next run
         try:
             with open(TOKEN_FILE, 'w') as token:
                 token.write(creds.to_json())
@@ -84,17 +88,13 @@ def authenticate():
         return None
 
 
-def invalidate_service():
-
-    global _drive_service
-    _drive_service = None
-    _folder_cache.clear()
-
-
 def get_or_create_folder(service, folder_name: str, parent_id: Optional[str] = None) -> Optional[str]:
-
+    """
+    Get or create a folder in Google Drive.
+    Returns the folder ID, or None if failed.
+    """
     try:
-
+        # Search for existing folder
         query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
         if parent_id:
             query += f" and '{parent_id}' in parents"
@@ -109,7 +109,7 @@ def get_or_create_folder(service, folder_name: str, parent_id: Optional[str] = N
         if files:
             return files[0]['id']
         
-
+        # Create new folder
         file_metadata = {
             'name': folder_name,
             'mimeType': 'application/vnd.google-apps.folder'
@@ -131,11 +131,12 @@ def get_or_create_folder(service, folder_name: str, parent_id: Optional[str] = N
 
 
 def get_or_create_folder_path(service, path_parts: list[str]) -> Optional[str]:
-
-    cache_key = '/'.join(path_parts)
-    if cache_key in _folder_cache:
-        return _folder_cache[cache_key]
-
+    """
+    Create nested folder structure in Google Drive.
+    Returns the final folder ID, or None if failed.
+    
+    Example: ['22-01-26_00-05-59', 'subfolder', 'deep'] creates nested folders.
+    """
     parent_id = None
     
     for folder_name in path_parts:
@@ -144,94 +145,66 @@ def get_or_create_folder_path(service, path_parts: list[str]) -> Optional[str]:
             return None
         parent_id = folder_id
     
-    _folder_cache[cache_key] = parent_id
     return parent_id
 
 
-def file_exists_in_folder(service, filename: str, folder_id: str) -> bool:
-
-    try:
-        query = f"name='{filename}' and '{folder_id}' in parents and trashed=false"
-        results = service.files().list(q=query, fields='files(id)').execute()
-        return len(results.get('files', [])) > 0
-    except HttpError as e:
-        logger.warning(f"Failed to check if '{filename}' exists in folder: {e}")
-        return False  
-
-
 def upload_file(service, file_path: Path, folder_id: Optional[str] = None) -> bool:
-
-    suffix = file_path.suffix.lower()
-    mime_types = {
-        '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        '.ppt': 'application/vnd.ms-powerpoint',
-        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        '.doc': 'application/msword',
-        '.pdf': 'application/pdf',
-        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        '.xls': 'application/vnd.ms-excel',
-        '.xlsm': 'application/vnd.ms-excel.sheet.macroEnabled.12',
-    }
-    mime_type = mime_types.get(suffix, 'application/octet-stream')
-
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            file_metadata = {'name': file_path.name}
-            if folder_id:
-                file_metadata['parents'] = [folder_id]
-            
-            media = MediaFileUpload(str(file_path), mimetype=mime_type, resumable=True)
-            
-            file = service.files().create(
-                body=file_metadata,
-                media_body=media,
-                fields='id, name'
-            ).execute()
-            
-            logger.info(f"Uploaded '{file_path.name}' to Google Drive (ID: {file.get('id')})")
-            return True
+    """
+    Upload a file to Google Drive.
+    Returns True on success, False on failure.
+    """
+    try:
+        file_metadata = {'name': file_path.name}
+        if folder_id:
+            file_metadata['parents'] = [folder_id]
         
-        except HttpError as e:
-            status_code = e.resp.status if e.resp else None
-
-            if status_code in (401, 403):
-                logger.warning(f"Auth error uploading '{file_path.name}', re-authenticating...")
-                invalidate_service()
-                new_service = authenticate()
-                if new_service:
-                    service = new_service
-                else:
-                    logger.error("Re-authentication failed")
-                    return False
-
-            if attempt < max_retries - 1:
-                wait = 2 ** attempt
-                logger.warning(f"Retry {attempt + 1}/{max_retries} for '{file_path.name}' in {wait}s...")
-                time.sleep(wait)
-            else:
-                logger.error(f"Failed to upload '{file_path.name}' after {max_retries} attempts: {e}")
-                return False
-
-        except Exception as e:
-            logger.error(f"Unexpected error uploading '{file_path.name}': {e}")
-            return False
-
-    return False
+        # Determine MIME type
+        suffix = file_path.suffix.lower()
+        mime_types = {
+            '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            '.ppt': 'application/vnd.ms-powerpoint',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.doc': 'application/msword',
+        }
+        mime_type = mime_types.get(suffix, 'application/octet-stream')
+        
+        media = MediaFileUpload(str(file_path), mimetype=mime_type, resumable=True)
+        
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id, name'
+        ).execute()
+        
+        logger.info(f"Uploaded '{file_path.name}' to Google Drive (ID: {file.get('id')})")
+        return True
+    
+    except HttpError as e:
+        logger.error(f"Failed to upload '{file_path.name}': {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error uploading '{file_path.name}': {e}")
+        return False
 
 
 def upload_with_fallback(file_path: Path, drive_folder_parts: list[str], local_fallback_path: Path) -> bool:
-
+    """
+    Attempt to upload file to Google Drive. Fall back to local copy if Drive fails.
+    
+    Args:
+        file_path: Path to the source file
+        drive_folder_parts: List of folder names for Drive hierarchy (e.g., ['root', 'sub'])
+        local_fallback_path: Local directory to copy to if Drive upload fails
+    
+    Returns:
+        True if file was saved (either to Drive or locally), False if both failed.
+    """
+    # Attempt Google Drive upload
     service = authenticate()
     
     if service:
         folder_id = get_or_create_folder_path(service, drive_folder_parts)
         if folder_id:
-
-            if file_exists_in_folder(service, file_path.name, folder_id):
-                logger.info(f"Skipped '{file_path.name}' — already exists on Drive")
-                return True
-            
             if upload_file(service, file_path, folder_id):
                 return True
             else:
@@ -241,7 +214,7 @@ def upload_with_fallback(file_path: Path, drive_folder_parts: list[str], local_f
     else:
         logger.warning("Google Drive authentication failed, falling back to local storage")
     
-
+    # Fallback to local storage
     try:
         local_fallback_path.mkdir(parents=True, exist_ok=True)
         dest_file = local_fallback_path / file_path.name
